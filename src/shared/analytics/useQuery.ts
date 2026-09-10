@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { runQuery } from "../../../shared/analytics/analyticsClient";
-import type { QueryResult } from "../../../shared/analytics/types";
+import { runQuery } from "./analyticsClient";
+import type { QueryResult } from "./types";
 
 /** Run a registry query and track its lifecycle. Skips entirely when `enabled` is false. */
 export function useQuery(queryId: string, params: Record<string, unknown>, enabled = true) {

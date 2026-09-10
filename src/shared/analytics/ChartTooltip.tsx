@@ -1,8 +1,10 @@
 import type { TooltipProps } from "recharts";
 
 /**
- * Shared tooltip. Values wear ink tokens, never the series colour - the swatch beside a row
- * carries identity, so the text stays legible for anyone who cannot separate the hues.
+ * The tooltip and value formatter every chart and table in the app shares.
+ *
+ * Values wear ink tokens, never the series colour - the swatch beside a row carries identity,
+ * so the text stays legible for anyone who cannot separate the hues.
  */
 export function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
