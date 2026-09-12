@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # `npm ci` rather than `npm install`: it installs the lockfile exactly and
+      # fails if package.json and the lock have drifted, which is the check a
+      # monorepo that never ran this could not make.
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run build
