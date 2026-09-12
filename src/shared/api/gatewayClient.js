@@ -1,3 +1,5 @@
+import { challengeOf, SESSION_ENDED, signIn } from "./session";
+
 export const apiRoots = Object.freeze({
   agent: "/agent",
   analytics: "/analytics",
@@ -51,6 +53,14 @@ export async function requestJson(root, path = "", init = {}) {
 
   if (response.status === 204) {
     return null;
+  }
+
+  if (response.status === 401) {
+    // Every page behind the gateway shares one session, so this is never about the endpoint that
+    // happened to notice first.
+    const challenge = challengeOf(response);
+    if (challenge.kind === "session") signIn(challenge.login);
+    throw new GatewayClientError(SESSION_ENDED, 401, url);
   }
 
   if (!response.ok) {

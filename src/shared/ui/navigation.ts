@@ -88,6 +88,21 @@ export const ROUTES: Record<string, RouteSpec> = {
     },
   },
   "/agent": { title: "Ask Athena", defaults: {}, drill: [], chips: {} },
+  // Metis's two pages. `journey` is a drill step rather than a filter: it selects WHICH model is
+  // on screen rather than narrowing one, so it belongs in the breadcrumb and not in the chip row,
+  // where "Clear 1 filter" would offer to empty the page.
+  "/decisions": {
+    title: "Decisions waiting",
+    defaults: { workflow: "" },
+    drill: [],
+    chips: { workflow: "Workflow" },
+  },
+  "/models": {
+    title: "Model explorer",
+    defaults: { journey: "", surface: "api" },
+    drill: ["journey"],
+    chips: { surface: "Surface" },
+  },
 };
 
 export interface Crumb {

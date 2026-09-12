@@ -40,6 +40,18 @@ export function AppShell() {
             </nav>
           </div>
 
+          <div className="nav-group">
+            <p className="sidebar-section-title">Métis</p>
+            <nav className="nav-list" aria-label="Reasoning plane">
+              <NavLink to="/decisions" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+                Decisions waiting
+              </NavLink>
+              <NavLink to="/models" className={({ isActive }) => `nav-link${isActive ? " nav-link--active" : ""}`}>
+                Model explorer
+              </NavLink>
+            </nav>
+          </div>
+
           <div className="sidebar-card sidebar-card--contrast">
             <p className="eyebrow">Decision model</p>
             <h3>Four gates, one answer</h3>

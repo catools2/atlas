@@ -1,3 +1,4 @@
+import { challengeOf, csrfHeaders, SESSION_ENDED, signIn } from "../api/session";
 import type { DashboardSpec, DashboardSummary, QueryResult, QuerySummary } from "./types";
 
 const ANALYTICS_ROOT = "/analytics";
@@ -16,6 +17,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { Accept: "application/json", ...(init?.headers ?? {}) },
   });
+
+  if (response.status === 401) {
+    // Not a failed query. The gateway owns identity now, so an expired session reaches every
+    // panel at once; reporting it as "the analytics service is broken" would send the reader
+    // looking for an outage that is not there.
+    const challenge = challengeOf(response);
+    if (challenge.kind === "session") signIn(challenge.login);
+    throw new AnalyticsError(SESSION_ENDED, 401);
+  }
 
   if (!response.ok) {
     // The service answers 400 with {"error": "..."} for anything the caller got wrong;
@@ -50,7 +60,8 @@ export const runQuery = (
 ) =>
   request<QueryResult>(`/queries/${encodeURIComponent(queryId)}/run`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // A write under a session cookie carries the CSRF token the gateway issued, or it is a 403.
+    headers: { "Content-Type": "application/json", ...csrfHeaders() },
     body: JSON.stringify(params),
     signal,
   });

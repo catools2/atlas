@@ -17,6 +17,8 @@ export interface ToolCall {
   input: Record<string, unknown>;
 }
 
+import { challengeOf, csrfHeaders, SESSION_ENDED, signIn } from "../api/session";
+
 const AGENT_ROOT = "/agent";
 
 export async function getStatus(): Promise<AgentStatus> {
@@ -51,10 +53,22 @@ export async function askAgent(
 ): Promise<void> {
   const response = await fetch(`${AGENT_ROOT}/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      ...csrfHeaders(),
+    },
     body: JSON.stringify(body),
     signal,
   });
+
+  if (response.status === 401) {
+    const challenge = challengeOf(response);
+    if (challenge.kind === "session") signIn(challenge.login);
+    handlers.onError(SESSION_ENDED);
+    handlers.onDone();
+    return;
+  }
 
   if (!response.ok || !response.body) {
     handlers.onError(`Agent request failed (${response.status})`);

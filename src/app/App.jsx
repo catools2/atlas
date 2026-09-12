@@ -20,6 +20,8 @@ import { PerformancePage } from "../features/qa/pages/PerformancePage";
 import { CorrelationPage } from "../features/qa/pages/CorrelationPage";
 import { AgentPage } from "../features/agent/pages/AgentPage";
 import { HomePage } from "../features/home/pages/HomePage";
+import { ModelExplorerPage } from "../features/metis/pages/ModelExplorerPage";
+import { QueuePage } from "../features/metis/pages/QueuePage";
 import { apiRoots } from "../shared/api/gatewayClient";
 import { AppShell } from "../shared/ui/AppShell";
 import { DashboardPageHero } from "../shared/ui/DashboardPageHero";
@@ -158,6 +160,8 @@ export function App() {
           <Route path="performance" element={<PerformancePage />} />
           <Route path="correlation" element={<CorrelationPage />} />
           <Route path="agent" element={<AgentPage />} />
+          <Route path="decisions" element={<QueuePage />} />
+          <Route path="models" element={<ModelExplorerPage />} />
           <Route path="overview" element={<OverviewPage apiRoots={apiRoots} />} />
           {catalogPages.map((page) => (
             <Route key={page.path} path={page.path} element={<CoreCatalogPage {...page} />} />

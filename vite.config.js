@@ -13,6 +13,10 @@ const BASE = "/ui/";
  */
 const API_PREFIXES = [
   "/agent", "/analytics", "/core", "/git", "/kube",
+  // Metis, the reasoning plane. It is not an Athena service and the gateway forwards only GETs
+  // to it, but from this app's side it is the same thing as the others: a prefix the gateway
+  // owns, which the dev server must not answer with the SPA's index.html.
+  "/metis",
   "/metric", "/pipeline", "/spec", "/tms",
 ];
 

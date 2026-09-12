@@ -21,7 +21,7 @@ Athena backend history is not.
 ```bash
 npm ci
 npm run dev      # vite, port 5173
-npm test         # vitest, 35 tests across 3 files
+npm test         # vitest, 43 tests across 4 files
 npm run build    # → dist/
 npm run preview  # serves dist/ on port 4173 — build first
 ```
@@ -41,8 +41,29 @@ athena-gateway/src/main/resources/application.yml
   /ui/**       →  this app
 ```
 
-So `athena-gateway` needs no edit. Point `ATHENA_FRONTEND_URI` at wherever this
-runs.
+So `athena-gateway` needs no edit for the UI route. Point `ATHENA_FRONTEND_URI`
+at wherever this runs.
+
+Métis is reached through the same gateway, on a route it *did* need:
+
+```
+  /metis/**  →  ${METIS_API_URI:http://127.0.0.1:8732}   StripPrefix=1
+               predicate  Method=GET          — an allowlist, see below
+               filter     SetRequestHeader Authorization: Bearer ${METIS_API_TOKEN}
+```
+
+Two environment variables, in two different places:
+
+| Variable | Set where | What it is |
+|---|---|---|
+| `METIS_API_TOKEN` | the **gateway** | the one service token Métis sees. Never reaches the browser. |
+| `METIS_API_URI` | the **gateway** | where `metis api` is listening. |
+| `VITE_METIS_REVIEW_UI` | **this app**, at build time | where `metis ui` is listening — the page a queue row links *out* to. Defaults to `http://127.0.0.1:8731`. |
+
+Start the API Métis serves those reads from with `metis api` (loopback and port
+8732 by default), pointing `METIS_API_TOKENS` at a file of
+`sha256<TAB>name<TAB>role` lines. Without it every read but `/healthz` answers
+401, and this app says so rather than showing an empty page.
 
 ## The one rule that is not a preference
 
@@ -58,6 +79,11 @@ destroying the rule that a proposer may not approve their own work.
 So a queue row links **out** to Métis's own review UI to decide. This app's job
 is to get people to the gate with the evidence in hand, not to move the gate.
 
+The gateway enforces it rather than trusting this app to behave: `Method=GET` on
+the `/metis/**` route is an allowlist, and every Métis read is a GET while all
+three of its gated decisions are POSTs. A decision route is unreachable through
+the gateway even for a caller holding a valid identity.
+
 The same applies to what gets rendered: **a coverage figure always carries its
 `unmeasured` count.** A number with no caveat beside it is a claim Métis does not
 make.
@@ -68,9 +94,10 @@ make.
 src/app/          shell, providers, routing
 src/features/     one directory per area — qa, reports, pipelines, apis,
                   catalog, governance, metrics, git, runtime, agent, home,
-                  overview
+                  overview, metis (decisions queue, model explorer)
 src/shared/       ui/ (AppShell, TopBar, navigation, DetailDialog)
                   analytics/ (filters, useQuery)
+                  metis/ (metisClient, useMetisRead, MetisBoundary)
                   api/  agent/
 src/styles/       main.css — tailwind plus the hand-written chrome
 ```

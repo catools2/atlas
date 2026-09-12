@@ -18,7 +18,9 @@
     // as they are edited rather than in one sweep.
     "allowJs": true,
     "checkJs": false,
-    "types": ["vitest/globals", "node"]
+    // `vite/client` types `import.meta.env`, which is how a deployment points the app at its
+    // own Metis review UI without a rebuild of the module that names it.
+    "types": ["vitest/globals", "node", "vite/client"]
   },
   "include": ["src"]
 }
