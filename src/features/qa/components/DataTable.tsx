@@ -2,10 +2,19 @@ import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import type { QueryResult } from "../../../shared/analytics/types";
 import { formatValue } from "../../../shared/analytics/ChartTooltip";
+import { ENTITY_KEYS } from "../../../shared/analytics/entityKeys";
 
 interface DataTableProps {
   result: QueryResult;
   onRowClick?: (row: Record<string, unknown>) => void;
+  /**
+   * A click on one cell rather than the whole row.
+   *
+   * <p>Wide tables carry several entities per row — a cycle, its item, its executor — and a row
+   * click has to guess which the reader meant. When a cell names an entity the app has a page
+   * for, it wins; anything else falls through to the row.
+   */
+  onCellClick?: (row: Record<string, unknown>, column: string) => void;
   /** Column name whose value decides the row accent, for pass/fail style tables. */
   statusColumn?: string;
   /** Message for the no-rows case, when the page can say something more useful than the default. */
@@ -20,7 +29,9 @@ const STATUS_TONE: Record<string, string> = {
   skipped: "text-ink-muted",
 };
 
-export function DataTable({ result, onRowClick, statusColumn, emptyMessage }: DataTableProps) {
+export function DataTable({
+  result, onRowClick, onCellClick, statusColumn, emptyMessage,
+}: DataTableProps) {
   const [sort, setSort] = useState<{ index: number; descending: boolean } | null>(null);
 
   const statusIndex = statusColumn
@@ -69,6 +80,7 @@ export function DataTable({ result, onRowClick, statusColumn, emptyMessage }: Da
             const status = statusIndex >= 0 ? String(row[statusIndex] ?? "").toLowerCase() : "";
             const tone = Object.entries(STATUS_TONE).find(([k]) => status.includes(k))?.[1];
             const activate = onRowClick ? () => onRowClick(asRecord(result, row)) : undefined;
+            const record = asRecord(result, row);
             return (
               <tr
                 key={i}
@@ -84,16 +96,40 @@ export function DataTable({ result, onRowClick, statusColumn, emptyMessage }: Da
                   : undefined}
                 className={`${activate ? "cursor-pointer focus:bg-white/[0.06] focus:outline-none" : ""} hover:bg-white/[0.03]`}
               >
-                {row.map((cell, j) => (
-                  <td
-                    key={j}
-                    className={`whitespace-nowrap border-b border-line/40 px-3 py-1.5 tabular-nums ${
-                      j === statusIndex && tone ? tone : "text-ink"
-                    }`}
-                  >
-                    {formatValue(cell)}
-                  </td>
-                ))}
+                {row.map((cell, j) => {
+                  const column = result.columns[j]?.name ?? "";
+                  // A cell is only independently clickable when it names something more
+                  // specific than the row does; otherwise it would be a second control that
+                  // does the same thing, which is worse than one.
+                  const cellTarget =
+                    onCellClick && column in ENTITY_KEYS && cell !== null && cell !== "";
+                  return (
+                    <td
+                      key={j}
+                      className={`whitespace-nowrap border-b border-line/40 px-3 py-1.5 tabular-nums ${
+                        j === statusIndex && tone ? tone : "text-ink"
+                      }`}
+                    >
+                      {cellTarget ? (
+                        <button
+                          type="button"
+                          className="underline decoration-dotted underline-offset-2 hover:text-ink focus:outline-none focus:ring-1 focus:ring-accent"
+                          // Stops the row handler also firing: two answers for one click, and
+                          // the row's - being less specific - would be the one that lands.
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onCellClick!(record, column);
+                          }}
+                          aria-label={`${ENTITY_KEYS[column].noun} ${formatValue(cell)}`}
+                        >
+                          {formatValue(cell)}
+                        </button>
+                      ) : (
+                        formatValue(cell)
+                      )}
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}

@@ -1,0 +1,63 @@
+# The first Node pipeline in this group.
+#
+# `pipeline/templates` ships only maven-jdk{11,17,21,25}.yml, so there is nothing to include
+# here. This is deliberately self-contained rather than a new shared template: one consumer
+# does not justify a template, and the shape will be clearer after a second front end exists.
+# If one appears, lift this into pipeline/templates/pipeline/node20.yml.
+
+variables:
+  # Match the runtime the image ships rather than pinning a second version here.
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  # The gateway serves the built assets; the app is mounted under /ui/ (see vite.config.js).
+  BASE_PATH: "/ui/"
+
+default:
+  image: node:20-alpine
+  cache:
+    # Keyed on the lockfile: a dependency change invalidates it, a source change does not.
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  # `npm ci` needs the lockfile to match package.json exactly; it fails loudly if it does not,
+  # which is the point of using it over `npm install` in CI.
+  before_script:
+    - npm ci --prefer-offline --no-audit --no-fund
+
+stages:
+  - verify
+  - build
+
+typecheck:
+  stage: verify
+  script:
+    - npx tsc --noEmit -p tsconfig.json
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+test:
+  stage: verify
+  script:
+    - npx vitest run --reporter=default --reporter=junit --outputFile=junit.xml
+  artifacts:
+    when: always
+    reports:
+      junit: junit.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+build:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH

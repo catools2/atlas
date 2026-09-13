@@ -81,8 +81,9 @@ export function AgentPage() {
         <p className="eyebrow-label">Agent</p>
         <h1 className="font-display text-2xl font-semibold text-ink">Ask Athena</h1>
         <p className="mt-1 max-w-[70ch] text-sm text-ink-muted">
-          Answers come from Athena's registered queries — the same ones the workspace pages run.
-          Tool calls are shown so you can check where a number came from.
+          Answers come from Athena's registered queries, or SQL the agent writes itself when none
+          fits — Athena only runs it if it is read-only. Tool calls are shown so you can check
+          where a number came from.
         </p>
       </header>
 

@@ -1,5 +1,20 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { OverviewPage } from "../features/overview/pages/OverviewPage";
+import { RunDetailPage } from "../features/atlas/pages/RunDetailPage";
+import { RunListPage } from "../features/atlas/pages/RunListPage";
+import { WorkflowDetailPage } from "../features/atlas/pages/WorkflowDetailPage";
+import { WorkflowListPage } from "../features/atlas/pages/WorkflowListPage";
+import { QueryDetailPage } from "../features/queries/pages/QueryDetailPage";
+import { QueryListPage } from "../features/queries/pages/QueryListPage";
+import { ReportIndexPage } from "../features/dashboards/pages/ReportIndexPage";
+import { QaDashboardReport } from "../features/dashboards/pages/QaDashboardReport";
+import { RegressionStatisticsReport } from "../features/dashboards/pages/RegressionStatisticsReport";
+import { TeamRegressionReport } from "../features/dashboards/pages/TeamRegressionReport";
+import { TeamsOverallRegressionReport } from "../features/dashboards/pages/TeamsOverallRegressionReport";
+import { DefectsReport } from "../features/dashboards/pages/DefectsReport";
+import { PlaywrightReport } from "../features/dashboards/pages/PlaywrightReport";
+import { EnvironmentHealthReport } from "../features/dashboards/pages/EnvironmentHealthReport";
+import { InventoryTrendReport } from "../features/dashboards/pages/InventoryTrendReport";
+import { DatabaseExecutionReport } from "../features/dashboards/pages/DatabaseExecutionReport";
 import { ApiSpecDetailPage } from "../features/apis/pages/ApiSpecDetailPage";
 import { ApiSpecWorkspacePage } from "../features/apis/pages/ApiSpecWorkspacePage";
 import { CoreCatalogPage } from "../features/catalog/pages/CoreCatalogPage";
@@ -20,8 +35,6 @@ import { PerformancePage } from "../features/qa/pages/PerformancePage";
 import { CorrelationPage } from "../features/qa/pages/CorrelationPage";
 import { AgentPage } from "../features/agent/pages/AgentPage";
 import { HomePage } from "../features/home/pages/HomePage";
-import { ModelExplorerPage } from "../features/metis/pages/ModelExplorerPage";
-import { QueuePage } from "../features/metis/pages/QueuePage";
 import { apiRoots } from "../shared/api/gatewayClient";
 import { AppShell } from "../shared/ui/AppShell";
 import { DashboardPageHero } from "../shared/ui/DashboardPageHero";
@@ -159,10 +172,27 @@ export function App() {
           <Route path="test-cycles" element={<TestCyclesPage />} />
           <Route path="performance" element={<PerformancePage />} />
           <Route path="correlation" element={<CorrelationPage />} />
-          <Route path="agent" element={<AgentPage />} />
-          <Route path="decisions" element={<QueuePage />} />
-          <Route path="models" element={<ModelExplorerPage />} />
-          <Route path="overview" element={<OverviewPage apiRoots={apiRoots} />} />
+          <Route path="agent" element={<AgentPage />} />          <Route path="atlas/workflows" element={<WorkflowListPage />} />
+          <Route path="atlas/workflows/:code" element={<WorkflowDetailPage />} />
+          <Route path="atlas/runs" element={<RunListPage />} />
+          <Route path="atlas/runs/:workflow/:scope" element={<RunDetailPage />} />
+          <Route path="queries" element={<QueryListPage />} />
+          <Route path="queries/:id" element={<QueryDetailPage />} />
+          <Route path="dashboards" element={<ReportIndexPage />} />
+          {/* One route per report. Each is a real page, so there is no :id and nothing is
+              resolved at runtime - and the route guard in routes.test.ts can read them. */}
+          <Route path="dashboards/qa-dashboard" element={<QaDashboardReport />} />
+          <Route path="dashboards/regression" element={<RegressionStatisticsReport />} />
+          <Route path="dashboards/team-regression" element={<TeamRegressionReport />} />
+          <Route path="dashboards/teams-regression" element={<TeamsOverallRegressionReport />} />
+          <Route path="dashboards/defects" element={<DefectsReport />} />
+          <Route path="dashboards/playwright" element={<PlaywrightReport />} />
+          <Route path="dashboards/environment-health" element={<EnvironmentHealthReport />} />
+          <Route path="dashboards/inventory-trend" element={<InventoryTrendReport />} />
+          <Route path="dashboards/database-execution" element={<DatabaseExecutionReport />} />
+          {/* Was a hand-written page describing this migration's own progress rather than
+              quality data. The dashboards show the real thing. */}
+          <Route path="overview" element={<Navigate to="/dashboards" replace />} />
           {catalogPages.map((page) => (
             <Route key={page.path} path={page.path} element={<CoreCatalogPage {...page} />} />
           ))}

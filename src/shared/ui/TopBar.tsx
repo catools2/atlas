@@ -1,6 +1,8 @@
+import { useSyncExternalStore } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw, X } from "lucide-react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { chipParams, describe } from "./navigation";
+import { subscribe } from "./titleCache";
 import { useHistoryPosition } from "./useHistoryPosition";
 
 /**
@@ -14,6 +16,9 @@ export function TopBar() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { canGoBack, canGoForward } = useHistoryPosition();
+
+  // Repaint when a page publishes its title, so the crumb upgrades from the id.
+  useSyncExternalStore(subscribe, () => undefined, () => undefined);
 
   const view = describe(location.pathname, location.search);
 

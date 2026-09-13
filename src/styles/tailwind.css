@@ -7,6 +7,95 @@
  * Both stylesheets have to coexist while pages move over one at a time.
  */
 @layer components {
+  /* A small inline label: a workflow code, a stage flag, a run's state. */
+  .chip {
+    @apply inline-flex items-center rounded-full border border-line px-1.5 py-0.5
+           text-[10px] text-ink-muted;
+  }
+
+  /* Buttons. Small, because these sit beside data and must not compete with it. */
+  .btn-primary {
+    @apply inline-flex items-center gap-1 rounded border border-accent/40 bg-accent/15 px-2 py-1
+           text-xs text-ink hover:bg-accent/25
+           focus:outline-none focus:ring-1 focus:ring-accent
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-1 rounded border border-line px-2 py-1 text-xs
+           text-ink-muted hover:text-ink
+           focus:outline-none focus:ring-1 focus:ring-accent
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Grafana's grid. `grid-auto-rows` is its row unit; panels span whole numbers of them, so
+     the imported layout is reproduced exactly with no measurement at runtime. */
+  .dash-grid {
+    display: grid;
+    grid-auto-rows: 30px;
+    gap: 8px;
+  }
+
+  /* Narrow screens: one column, in reading order. No resize listener - the grid template is
+     simply overridden, and `grid-column: 1 / -1` collapses every panel to full width. */
+  @media (max-width: 1024px) {
+    .dash-grid {
+      grid-template-columns: 1fr !important;
+      grid-auto-rows: minmax(180px, auto);
+    }
+
+    .dash-grid > * {
+      grid-column: 1 / -1 !important;
+      grid-row: auto !important;
+    }
+  }
+
+  /* The keyboard and screen-reader rendering of a chart.
+     Not `display: none` and not `visibility: hidden` - both remove it from the accessibility
+     tree and the tab order, which is the entire thing it exists to provide. This is the
+     clip-rect idiom: present, focusable, announced, and occupying no visual space. */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* …until it is focused, when it must be visible: a sighted keyboard user needs to see
+     where focus went. */
+  .visually-hidden:focus-within {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    @apply rounded-lg border border-line bg-surface p-2 text-sm;
+  }
+
+  /* The row behind a mark, when there is nothing more specific to offer. */
+  .row-inspector {
+    @apply grid gap-px overflow-hidden rounded-lg border border-line bg-line;
+  }
+
+  .row-inspector__entry {
+    @apply grid grid-cols-[minmax(8rem,12rem)_1fr] gap-3 bg-surface px-3 py-2;
+  }
+
+  .row-inspector__entry dt {
+    @apply text-sm text-ink-muted;
+  }
+
+  .row-inspector__entry dd {
+    @apply m-0 break-words font-mono text-sm;
+  }
+
   .card {
     @apply rounded-lg border border-line bg-surface/95 shadow-panel backdrop-blur-sm;
   }

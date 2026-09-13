@@ -104,6 +104,19 @@ describe("QueryBoundary", () => {
     expect(screen.queryByText("nothing recorded")).toBeNull();
   });
 
+  it("prefers the platform error message over its generic error label", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ status: 400, error: "Bad Request", message: "Unknown query 'overview_kpis'" }),
+    }));
+
+    render(<Probe params={{ a: 1 }} />);
+
+    expect(await screen.findByText("Unknown query 'overview_kpis'")).toBeInTheDocument();
+    expect(screen.queryByText("Bad Request")).toBeNull();
+  });
+
   it("claims there is no data only when the query returned none", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: true, status: 200, json: async () => result([]),

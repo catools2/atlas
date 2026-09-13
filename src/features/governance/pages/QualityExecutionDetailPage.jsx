@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+
+import { usePublishedTitle } from "../../../shared/ui/usePublishedTitle";
 import { apiRoots, requestJson } from "../../../shared/api/gatewayClient";
 import { DashboardPageHero } from "../../../shared/ui/DashboardPageHero";
 import { formatDateTime, formatNumber, getErrorMessage } from "../../../shared/ui/workspacePageUtils";
@@ -49,6 +51,9 @@ function getElapsedLabel(createdOn, executedOn) {
 export function QualityExecutionDetailPage() {
   const { id } = useParams();
   const [detailData, setDetailData] = useState(null);
+
+  // Names the execution in the breadcrumb once it is known; the id stands in until then.
+  usePublishedTitle(detailData?.item);
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [reloadToken, setReloadToken] = useState(0);

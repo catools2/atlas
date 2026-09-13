@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 const gatewayProxyTarget = process.env.ATHENA_GATEWAY_PROXY ?? "http://localhost:8080";
+const analyticsProxyTarget = process.env.ATHENA_ANALYTICS_PROXY;
 
 /** Where the app is mounted, behind the gateway and in dev alike. */
 const BASE = "/ui/";
@@ -16,7 +17,6 @@ const API_PREFIXES = [
   // Metis, the reasoning plane. It is not an Athena service and the gateway forwards only GETs
   // to it, but from this app's side it is the same thing as the others: a prefix the gateway
   // owns, which the dev server must not answer with the SPA's index.html.
-  "/metis",
   "/metric", "/pipeline", "/spec", "/tms",
 ];
 
@@ -68,7 +68,18 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     strictPort: true,
-    proxy: Object.fromEntries(API_PREFIXES.map((prefix) => [prefix, gatewayProxyTarget])),
+    proxy: {
+      ...Object.fromEntries(API_PREFIXES.map((prefix) => [prefix, gatewayProxyTarget])),
+      ...(analyticsProxyTarget
+        ? {
+            "/analytics": {
+              target: analyticsProxyTarget,
+              changeOrigin: true,
+              rewrite: (path) => path.replace(/^\/analytics/, ""),
+            },
+          }
+        : {}),
+    },
   },
   preview: {
     host: "0.0.0.0",

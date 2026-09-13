@@ -11,7 +11,6 @@
  * 2. **A 401 now has two meanings.** The gateway answers `WWW-Authenticate: Session …` when the
  *    reader's session has ended — the reader signs in again and the app works. Métis answers
  *    `WWW-Authenticate: Bearer` when the one service token the gateway holds was refused — an
- *    operator sets `METIS_API_TOKEN` and no amount of signing in helps. Telling a reader to sign
  *    in for the second one sends them round a loop that cannot terminate.
  */
 
@@ -36,14 +35,12 @@ export type Challenge =
   /** The reader's session ended. `login` is the gateway's own sign-in path, from the challenge. */
   | { kind: "session"; login: string }
   /** Métis refused the gateway's service token. Nothing the reader can do. */
-  | { kind: "bearer" }
   | { kind: "unknown" };
 
 /** What a 401 is actually saying. */
 export function challengeOf(response: Response): Challenge {
   const header = response.headers.get("WWW-Authenticate") ?? "";
   const scheme = header.split(/[\s,]/, 1)[0].toLowerCase();
-  if (scheme === "bearer") return { kind: "bearer" };
   if (scheme === "session") {
     const login = /login="([^"]+)"/.exec(header)?.[1];
     return { kind: "session", login: login ?? DEFAULT_LOGIN };

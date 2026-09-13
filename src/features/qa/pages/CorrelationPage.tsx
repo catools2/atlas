@@ -8,6 +8,9 @@ import { QueryBoundary } from "../../../shared/analytics/QueryBoundary";
 import { useQuery } from "../../../shared/analytics/useQuery";
 import { CORRELATION_DEFAULTS } from "../../../shared/ui/navigation";
 import { DataTable } from "../components/DataTable";
+import { fromCell, fromRow } from "../../../shared/analytics/chartClick";
+import { defaultResolver, useDrill } from "../../../shared/analytics/drill";
+import type { Datum } from "../../../shared/analytics/drill";
 
 const NO_PARAMS = {};
 
@@ -31,7 +34,14 @@ const RANGE_PRESETS = [
  * one sits above the panel it governs rather than pretending to be global.
  */
 export function CorrelationPage() {
-  const { values, set, reset, activeCount } = useFilters(CORRELATION_DEFAULTS);
+  const { values, set, go, reset, activeCount } = useFilters(CORRELATION_DEFAULTS);
+
+  // One resolver for every table on the page. These rows name real entities, so tier 1 of the
+  // default resolver carries them; nothing bespoke is needed here.
+  // `go` pushes and `set` replaces — that distinction is why drilling leaves exactly one step
+  // for Back to undo, while narrowing a filter adds no history entry at all.
+  const drill = useDrill(defaultResolver(null), (patch, replace) =>
+    (replace ? set : go)(patch as never));
   const window = useTimeWindow(values);
   const dimensions = useDimensions("filter_change_dimensions");
   const quality = useDimensions("filter_test_dimensions");
@@ -141,26 +151,26 @@ export function CorrelationPage() {
       <div className="grid gap-3 xl:grid-cols-2">
         <Section icon={<GitCommit className="h-4 w-4 text-accent" />} title="Commits" q={commits}
                  scope="repository · author · search"
-                 empty={emptyFor("commits", "commits")} />
+                 empty={emptyFor("commits", "commits")} onDrill={drill} />
         <Section icon={<PlayCircle className="h-4 w-4 text-accent" />} title="Pipeline runs" q={runs}
                  scope="pipeline · version · environment"
-                 empty={emptyFor("pipeline_runs", "pipeline runs")} />
+                 empty={emptyFor("pipeline_runs", "pipeline runs")} onDrill={drill} />
         <Section icon={<TestTube2 className="h-4 w-4 text-accent" />} title="Test executions" q={tests}
                  status="execution_status" scope="outcome · version · search"
-                 empty={emptyFor("test_executions", "test executions")} />
+                 empty={emptyFor("test_executions", "test executions")} onDrill={drill} />
         <Section icon={<Boxes className="h-4 w-4 text-accent" />} title="Pods" q={pods}
                  scope="namespace · app · search"
-                 empty={emptyFor("pods", "pods")} />
+                 empty={emptyFor("pods", "pods")} onDrill={drill} />
         <Section icon={<Timer className="h-4 w-4 text-accent" />} title="Timing" q={metrics}
                  scope="environment · search" className="xl:col-span-2"
-                 empty={emptyFor("timing", "measurements")} />
+                 empty={emptyFor("timing", "measurements")} onDrill={drill} />
       </div>
     </div>
   );
 }
 
 function Section({
-  icon, title, q, status, scope, empty, className = "",
+  icon, title, q, status, scope, empty, className = "", onDrill,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -170,6 +180,8 @@ function Section({
   scope: string;
   empty: string;
   className?: string;
+  /** Every row here names something — a commit, a run, a pod — so none of them is a dead end. */
+  onDrill?: (datum: Datum) => unknown;
 }) {
   const count = q.result?.rows.length ?? 0;
   return (
@@ -186,7 +198,18 @@ function Section({
       </h2>
       <div className="min-h-0 flex-1 overflow-auto">
         <QueryBoundary query={q} empty={empty}>
-          {(rows) => <DataTable result={rows} statusColumn={status} />}
+          {(rows) => (
+            <DataTable
+              result={rows}
+              statusColumn={status}
+              onRowClick={onDrill ? (row) => onDrill(fromRow(row, { kind: "table" })) : undefined}
+              // A correlation row carries several entities at once - a repository, a pipeline,
+              // a namespace - so a row click would have to guess which one the reader meant.
+              onCellClick={
+                onDrill ? (row, column) => onDrill(fromCell(row, column, { kind: "table" })) : undefined
+              }
+            />
+          )}
         </QueryBoundary>
       </div>
     </section>

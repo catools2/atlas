@@ -6,15 +6,15 @@ import { chipParams, describe as describeRoute, CYCLES_DEFAULTS } from "./naviga
 
 describe("describe()", () => {
   it("builds a breadcrumb from the drill params, deepest last", () => {
-    const view = describeRoute("/test-cycles", "?cycle=C1&item=DEMO-T15")!;
-    expect(view.crumbs.map((c) => c.label)).toEqual(["Test cycles", "C1", "DEMO-T15"]);
+    const view = describeRoute("/test-cycles", "?cycle=C1&item=SAMPLE-T15")!;
+    expect(view.crumbs.map((c) => c.label)).toEqual(["Test cycles", "C1", "SAMPLE-T15"]);
     // Only the last crumb is where we already are, so only it has no link.
     expect(view.crumbs[2].to).toBeUndefined();
     expect(view.crumbs[0].to).toBe("/test-cycles");
   });
 
   it("keeps the filters when stepping back up the drill", () => {
-    const view = describeRoute("/test-cycles", "?range=90d&cycle=C1&item=DEMO-T15")!;
+    const view = describeRoute("/test-cycles", "?range=90d&cycle=C1&item=SAMPLE-T15")!;
     // Going back to the cycle must not silently widen the window the reader had chosen.
     expect(view.crumbs[1].to).toContain("range=90d");
     expect(view.crumbs[1].to).not.toContain("item=");

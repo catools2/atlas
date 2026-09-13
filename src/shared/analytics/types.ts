@@ -1,4 +1,4 @@
-/** Shapes returned by athena-boot-analytics. Mirrors the generated specs and QueryResult. */
+/** Shapes returned by athena-boot-analytics. */
 
 export type ParamKind = "scalar" | "list" | "instant" | "operator";
 
@@ -15,7 +15,6 @@ export interface QuerySummary {
   views: string[];
   tables: string[];
   params: ParamSpec[];
-  dashboards: string[];
 }
 
 export interface QueryColumn {
@@ -44,58 +43,8 @@ export type Viz =
   | "timeseries" | "bar" | "barGauge" | "pie" | "table"
   | "stat" | "gauge" | "text" | "row" | "heatmap" | "stateTimeline";
 
-export interface PanelQuery {
-  queryId: string;
-  params: string[];
-}
-
-export interface PanelSpec {
-  id: number;
-  title: string;
-  viz: Viz;
-  grid: { x: number; y: number; w: number; h: number };
-  description?: string;
-  queries?: PanelQuery[];
-  /** Present when the panel cannot be rendered, with the reason. */
-  unsupported?: string;
-  content?: string;
-  mode?: string;
-  collapsed?: boolean;
-  display?: {
-    unit?: string;
-    decimals?: number;
-    min?: number;
-    max?: number;
-    thresholds?: unknown;
-  };
-  options?: Record<string, unknown>;
-}
-
-export interface VariableSpec {
-  name: string;
-  type: "query" | "custom" | "constant" | "interval" | string;
-  label: string;
-  multi: boolean;
-  includeAll: boolean;
-  options?: string[];
-  value?: string;
-  queryId?: string;
-  unsupported?: string;
-}
-
-export interface DashboardSpec {
-  id: string;
-  title: string;
-  variant: string;
-  source: string;
-  variables: VariableSpec[];
-  panels: PanelSpec[];
-}
-
-export interface DashboardSummary {
-  id: string;
-  title: string;
-  variant: string;
-  panelCount: number;
-  renderable: number;
-}
+// The dashboard specification types - PanelQuery, PanelSpec, VariableSpec, DashboardSpec and
+// DashboardSummary - lived here while the console rendered imported Grafana documents. Reports
+// are hand-written pages now: a figure names its query, its viz and its span in JSX, so there
+// is no document to describe and nothing left to type. `Viz` survives because a figure still
+// says which chart it wants.

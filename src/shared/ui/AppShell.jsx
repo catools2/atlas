@@ -11,7 +11,7 @@ export function AppShell() {
               A
             </div>
             <div className="sidebar-brand__copy">
-              <p className="eyebrow">Athena</p>
+              <p className="eyebrow">Atlas</p>
               <h2>Release control</h2>
               <p className="muted">One place to decide whether a release can move forward.</p>
             </div>

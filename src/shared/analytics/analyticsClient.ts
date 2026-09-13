@@ -1,6 +1,16 @@
 import { challengeOf, csrfHeaders, SESSION_ENDED, signIn } from "../api/session";
-import type { DashboardSpec, DashboardSummary, QueryResult, QuerySummary } from "./types";
+import type { QueryResult, QuerySummary } from "./types";
 
+/**
+ * The analytics service, which serves queries and nothing else.
+ *
+ * <p>It used to also serve dashboard specifications and accept edits to them. Those endpoints are
+ * gone, along with the specifications themselves: the console has hand-written report pages under
+ * `features/dashboards/pages/`, each naming the queries it needs. That leaves this service with
+ * one job — run a query, read-only, and return rows. `runQuery` names one that is already
+ * registered; `runSql` sends one built here or by the agent, which the service accepts only if
+ * it is a single read-only statement.
+ */
 const ANALYTICS_ROOT = "/analytics";
 
 export class AnalyticsError extends Error {
@@ -33,7 +43,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     let detail = `Request failed with ${response.status}`;
     try {
       const body = await response.json();
-      if (body && typeof body.error === "string") detail = body.error;
+      if (body && typeof body.message === "string") detail = body.message;
+      else if (body && typeof body.error === "string") detail = body.error;
     } catch {
       /* non-JSON error body */
     }
@@ -41,10 +52,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return response.json() as Promise<T>;
 }
-
-export const listDashboards = () => request<DashboardSummary[]>("/dashboards");
-
-export const getDashboard = (id: string) => request<DashboardSpec>(`/dashboards/${encodeURIComponent(id)}`);
 
 export const listQueries = () => request<QuerySummary[]>("/queries");
 
@@ -63,6 +70,23 @@ export const runQuery = (
     // A write under a session cookie carries the CSRF token the gateway issued, or it is a 403.
     headers: { "Content-Type": "application/json", ...csrfHeaders() },
     body: JSON.stringify(params),
+    signal,
+  });
+
+/**
+ * Run a caller-built SQL statement - a single read-only `SELECT`/`WITH`, which Athena enforces
+ * and rejects anything else. For any console surface that builds its own query rather than
+ * naming a registered one; the agent's `run_sql` tool reaches the same endpoint.
+ */
+export const runSql = (
+  sql: string,
+  params: Record<string, unknown> = {},
+  signal?: AbortSignal,
+) =>
+  request<QueryResult>("/queries/execute", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...csrfHeaders() },
+    body: JSON.stringify({ sql, params }),
     signal,
   });
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+
+import { usePublishedTitle } from "../../../shared/ui/usePublishedTitle";
 import { apiRoots, requestJson } from "../../../shared/api/gatewayClient";
 import { DashboardPageHero } from "../../../shared/ui/DashboardPageHero";
 import { formatDateTime, formatNumber, getErrorMessage } from "../../../shared/ui/workspacePageUtils";
@@ -59,6 +61,11 @@ export function ApiSpecDetailPage() {
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
+
+  // Names the record in the breadcrumb once it is known; the id stands in until then.
+  // Sits with the other hooks on purpose - this component returns early while loading, and a
+  // hook after that point is called conditionally.
+  usePublishedTitle(detailData?.title ?? detailData?.name);
 
   useEffect(() => {
     let isCancelled = false;
@@ -136,6 +143,7 @@ export function ApiSpecDetailPage() {
   }
 
   const paths = toSortedArray(detailData?.paths);
+
   const metadata = Array.isArray(detailData?.metadata) ? detailData.metadata : [];
   const freshnessState = getFreshnessState(detailData?.lastSyncTime);
 
